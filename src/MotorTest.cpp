@@ -29,7 +29,6 @@ MicroBit _uBit;
 #include "DcMotor.h"
 DcMotor dcMotor;
 
-
 double ___a;
 double ___b;
 
@@ -74,7 +73,7 @@ int main()
             dcMotor.set(Motor::M2, ___b);
             _uBit.rgb.setColour(MicroBitColor(255, 102, 0, 255));
         }
-        _uBit.sleep(1000);
+        _uBit.sleep(250);
         _uBit.rgb.setColour(MicroBitColor(0, 153, 0, 255));
         _uBit.sleep(_ITERATION_SLEEP_TIMEOUT);
     }

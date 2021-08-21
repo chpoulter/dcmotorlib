@@ -1,6 +1,6 @@
 # DC Motor Library and Demo
 
-This repository contains a library to control the DC Motor Module with the Calliope Mini and an example program.
+This repository contains a library to control the DC Motor Module with the Calliope Mini and some examples.
 
 ## Compiling the firmware
 

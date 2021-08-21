@@ -1,5 +1,6 @@
-ORACCRSC := /daten/Projekte/Calliope/OpenRoberta/ora-cc-rsc/RobotMbed/libs2017
+ORACCRSC := ../../OpenRoberta/ora-cc-rsc/RobotMbed/libs2017
 BUILD := build
+HEX := hex
 
 MICROBITPATH := $(ORACCRSC)/microbit
 MICROBITDALPATH := $(ORACCRSC)/microbit-dal
@@ -26,7 +27,8 @@ INCDEMO := $(INCLIB) \
            -I $(MICROBITPATH)/inc \
            -I $(BLEPATH) \
            -I $(MICROBITDALPATH)/inc/types \
-           -I $(MICROBITDALPATH)/inc/bluetooth
+           -I $(MICROBITDALPATH)/inc/bluetooth \
+           -I lib
 
 LDLIBS := -lnosys  -lstdc++ -lsupc++ -lm -lc -lgcc -lstdc++ -lsupc++ -lm -lc -lgcc
 CALLIOPELIBS := $(ORACCRSC)/microbit.a \
@@ -35,36 +37,37 @@ CALLIOPELIBS := $(ORACCRSC)/microbit.a \
                 $(ORACCRSC)/ble-nrf51822.a \
                 $(ORACCRSC)/nrf51-sdk.a \
                 $(ORACCRSC)/mbed-classic.a
+                
+DEMOS := CarControl.hex MotorTest.hex SimpleMotorTest.hex                 
 
-all: directories lib demo
+all: directories lib $(DEMOS)
 
 directories:
 	mkdir -p $(BUILD)
+	mkdir -p $(HEX)
 	
 lib: DcMotor.a
-
-demo: firmware.hex
-
            
-firmware.hex: MotorTest.hex
-	srec_cat $(BLE_BOOTLOADER_RESERVED_HEX) -intel $(S110NRF51822_HEX) -intel $(BUILD)/$< -intel -o $@ -intel --line-length=44
+%.hex: %.ihex
+	srec_cat $(BLE_BOOTLOADER_RESERVED_HEX) -intel $(S110NRF51822_HEX) -intel $(BUILD)/$< -intel -o $(HEX)/$@ -intel --line-length=44
 
-MotorTest.hex: MotorTest
+%.ihex: %.a
 	arm-none-eabi-objcopy -O ihex $(BUILD)/$< $(BUILD)/$@
 
-MotorTest: MotorTest.o DcMotor.a
+%.a: %.o DcMotor.a
 	arm-none-eabi-g++ $(LDFLAGS) -T $(NRF51822) -Wl,-Map,$(BUILD)/MotorTest.map -Wl,--start-group $(foreach i,$^,$(BUILD)/$(i)) $(LDLIBS) $(CALLIOPELIBS) -Wl,-end-group -o $(BUILD)/$@
 
-MotorTest.o: src/MotorTest.cpp
+%.o: src/%.cpp
 	arm-none-eabi-g++ $(INCDEMO) $(CPPLAGS) -MT $(BUILD)/$@.cpp.o -MF $(BUILD)/$@.cpp.o.d -o $(BUILD)/$@ -c $<
 
 DcMotor.a: DcMotor.o
 	ar rvs $(BUILD)/$@ $(BUILD)/$^
 	
-DcMotor.o: src/DcMotor.cpp
+DcMotor.o: lib/DcMotor.cpp
 	arm-none-eabi-g++ $(INCLIB) $(CPPLAGS) -MT $(BUILD)/$@.o -MF $(BUILD)/$@.o.d -c -o $(BUILD)/$@ $<
         
 clean:
-	-rm firmware.hex $(BUILD)/*
+	-rm $(HEX)/* $(BUILD)/*
+	-rmdir $(HEX)
 	-rmdir $(BUILD)
 	

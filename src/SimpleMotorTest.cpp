@@ -1,23 +1,3 @@
-/*
- * DC Motor Lib
- *
- * Copyright (C) 2021 Christian Poulter
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
- *
- */
-
 #define _GNU_SOURCE
 
 #include "MicroBit.h"
@@ -26,8 +6,11 @@
 #include <array>
 #include <stdlib.h>
 MicroBit _uBit;
+
 #include "DcMotor.h"
-DcMotor dcMotor;
+DcMotor dcMotor_D(0x60);
+
+
 
 double ___speed;
 double ___oldspeed;
@@ -38,7 +21,8 @@ int main()
     ___speed = 0;
     ___oldspeed = -1;
 
-    dcMotor.init();
+    dcMotor_D.init();
+
     _uBit.display.clear();
     _uBit.rgb.setColour(MicroBitColor(0, 153, 0, 255));
     while ( true ) {
@@ -58,12 +42,15 @@ int main()
             _uBit.rgb.setColour(MicroBitColor(255, 0, 0, 255));
             ___oldspeed = ___speed;
             _uBit.display.scroll(ManagedString(round(___speed / ((float) 10))));
-            dcMotor.set(Motor::M1, ___speed);
+            dcMotor_D.setPercent(1, ___speed);
             _uBit.rgb.setColour(MicroBitColor(0, 153, 0, 255));
         }
         _uBit.sleep(500);
         _uBit.sleep(_ITERATION_SLEEP_TIMEOUT);
     }
-    dcMotor.release();
+
+    dcMotor_D.release();
+
     release_fiber();
 }
+

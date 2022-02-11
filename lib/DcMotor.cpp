@@ -1,21 +1,21 @@
 /*
  * DC Motor Lib
  *
- * Copyright (C) 2021 Christian Poulter
- * 
+ * Copyright (C) 2021-2022 Christian Poulter
+ *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  */
 
 #include "DcMotor.h"
@@ -28,7 +28,9 @@ const uint8_t DcMotor::PINS[4][3] = {
     {     7,     5,    6},
 };
 
-DcMotor::DcMotor() : i2c(SDA, SCL) {}
+DcMotor::DcMotor(uint8_t i2cAddress) : i2c(SDA, SCL) {
+    this -> i2cAddress = (i2cAddress << 1);
+}
 
 void DcMotor::init() {
     writeI2C(PCA9685_REGISTER_MODE1, 0x00);
@@ -52,22 +54,29 @@ void DcMotor::release() {
     writeI2C(PCA9685_REGISTER_MODE1, 0x08);
 }
 
-void DcMotor::set(Motor motor, int8_t speed) {
+void DcMotor::setPercent(double motor, double speed) {
     if (speed > 0) {
-        setSpeed(motor, speed * 41);
-        setDirection(motor, Direction::Forward);
+    	setPercent(motor, Direction::Forward, abs(speed));
 
     } else if (speed < 0) {
-        setSpeed(motor, speed * -41);
-        setDirection(motor, Direction::Backward);
+    	setPercent(motor, Direction::Backward, abs(speed));
 
     } else {
-        setSpeed(motor, 0);
-        setDirection(motor, Direction::Stop);
+    	setPercent(motor, Direction::Stop, 0);
     }
 }
 
-void DcMotor::set(Motor motor, Direction direction, uint16_t speed) {
+void DcMotor::setPercent(double motorDouble, Direction direction, double speed) {
+	int8_t motorInt = motorDouble - 1;
+	if (motorInt < 0 || motorInt > 3) return;
+	Motor motor = static_cast<Motor>(motorInt);
+
+	uint16_t rawSpeed = (direction == Direction::Stop) ? 0 : (fmin(fmax(speed, -100), 100) * 41);
+
+	setRaw(motor, direction, rawSpeed);
+}
+
+void DcMotor::setRaw(Motor motor, Direction direction, uint16_t speed) {
     setSpeed(motor, speed);
     setDirection(motor, direction);
 }
@@ -122,7 +131,7 @@ void DcMotor::writeI2C(uint8_t reg, uint8_t value) {
     buffer[0] = reg;
     buffer[1] = value;
 
-    i2c.write(I2C_ADDRESS, buffer, 2);
+    i2c.write(i2cAddress, buffer, 2);
 }
 
 void DcMotor::writeI2C(uint8_t basereg, uint8_t value1, uint8_t value2, uint8_t value3, uint8_t value4) {
@@ -133,5 +142,5 @@ void DcMotor::writeI2C(uint8_t basereg, uint8_t value1, uint8_t value2, uint8_t 
     buffer[3] = value4;
     buffer[4] = value3;
 
-    i2c.write(I2C_ADDRESS, buffer, 5);
+    i2c.write(i2cAddress, buffer, 5);
 }

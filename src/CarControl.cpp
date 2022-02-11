@@ -1,23 +1,3 @@
-/*
- * DC Motor Lib
- *
- * Copyright (C) 2021 Christian Poulter
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
- *
- */
-
 #define _GNU_SOURCE
 
 #include "MicroBit.h"
@@ -26,10 +6,12 @@
 #include <array>
 #include <stdlib.h>
 MicroBit _uBit;
+
 #include "DcMotor.h"
-DcMotor dcMotor;
+DcMotor dcMotor_D(0x60);
 
 void checkAndWrite();
+
 
 double ___Motor1;
 double ___Motor2;
@@ -40,7 +22,8 @@ int main()
     ___Motor1 = 0;
     ___Motor2 = 0;
     _uBit.display.setDisplayMode(DISPLAY_MODE_GREYSCALE);
-    dcMotor.init();
+    dcMotor_D.init();
+
     _uBit.rgb.off();
     _uBit.rgb.setColour(MicroBitColor(255, 0, 0, 255));
     while (true) {
@@ -82,15 +65,17 @@ int main()
         _uBit.rgb.setColour(MicroBitColor(0, 153, 0, 255));
         _uBit.sleep(_ITERATION_SLEEP_TIMEOUT);
     }
-    dcMotor.release();
+
+    dcMotor_D.release();
+
     release_fiber();
 }
 
 void checkAndWrite() {
     ___Motor1 = min(max(___Motor1, -100), 100);
     ___Motor2 = min(max(___Motor2, -100), 100);
-    dcMotor.set(Motor::M1, ___Motor1);
-    dcMotor.set(Motor::M2, ___Motor2);
+    dcMotor_D.setPercent(1, ___Motor1);
+    dcMotor_D.setPercent(2, Direction::Stop, 0);
     _uBit.display.clear();
     for (int ___i = 0; ___i < ___Motor1 / ((float) 20); ___i += 1) {
         _uBit.display.image.setPixelValue(0, ___i, (5) * _SET_BRIGHTNESS_MULTIPLIER);
